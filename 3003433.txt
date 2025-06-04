@@ -1,0 +1,180 @@
+https://customers.mrlmanagement.com/ws/Acceder => HTTP/1.1 200 OK
+Content-Length: 116
+Content-Type: text/html; charset=utf-8
+Date: Wed, 04 Jun 2025 16:03:32 GMT
+Server: Microsoft-IIS/10.0
+Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept
+Access-Control-Allow-Methods: GET, POST
+Access-Control-Allow-Origin: *
+Cache-Control: private
+Set-Cookie: ARRAffinity=d7a5aa4cdcaa0fd7515a9f38a53bb3c7c4012e8db71817773bfe82021f970e76;Path=/;HttpOnly;Secure;Domain=customers.mrlmanagement.com
+Set-Cookie: ARRAffinitySameSite=d7a5aa4cdcaa0fd7515a9f38a53bb3c7c4012e8db71817773bfe82021f970e76;Path=/;HttpOnly;SameSite=None;Secure;Domain=customers.mrlmanagement.com
+X-AspNetMvc-Version: 5.2
+X-AspNet-Version: 4.0.30319
+X-Powered-By: ASP.NET
+
+{"token":"0x020000007A31445E55C21EB65E658A84A7028F7C305477FD67C49D03DB42AEC47231052ED219F8C423F8F050A869572169.971"} <br><br><br>Token = 0x020000007A31445E55C21EB65E658A84A7028F7C305477FD67C49D03DB42AEC47231052ED219F8C423F8F050A869572169.971<br><br>Cookie = ARRAffinity=d7a5aa4cdcaa0fd7515a9f38a53bb3c7c4012e8db71817773bfe82021f970e76; ARRAffinitySameSite=d7a5aa4cdcaa0fd7515a9f38a53bb3c7c4012e8db71817773bfe82021f970e76<br>select 
+case 
+when a.cdunidadeneg in (68) then '36'
+when a.cdunidadeneg in(69) then '53'
+else (select idunidade from unidade where cdunidade = a.cdunidadeneg)end
+from amostra a where cdamostra = 3003433<br><br><b>Previa = 0 </b><br><pre>SELECT 
+    I.CDINFO,
+    I.NMINFO,
+    CASE
+    WHEN I.CDINFO = 611 THEN LEFT(IA.VLINFO,10) ELSE IA.VLINFO END 
+    FROM INFOAMOSTRA IA 
+    INNER JOIN INFO I ON I.CDINFO = IA.CDINFO
+    WHERE IA.CDAMOSTRA = 3003433
+    and IA.CDINFO in (680,611,679,685,677,773,465,615,795,797,678)
+    UNION
+    SELECT 
+    I.CDINFO,
+    I.NMINFO,
+    CASE
+    WHEN I.CDINFO = 843 THEN LEFT(IA.VLINFO,10) ELSE IA.VLINFO END 
+    FROM INFOAMOSTRA IA 
+    INNER JOIN INFO I ON I.CDINFO = IA.CDINFO
+    WHERE IA.CDAMOSTRA = 3003433
+    and IA.CDINFO in (846,843,845,852,841,847,850)
+    UNION
+    SELECT
+    9100,IDTIPOAMOSTRA,NMTIPOAMOSTRA
+    FROM TIPOAMOSTRA WHERE CDTIPOAMOSTRA IN (SELECT CDTIPOAMOSTRA FROM AMOSTRA WHERE CDAMOSTRA = 3003433)
+    UNION
+    SELECT
+    9000,'Fecha de Muestreo',REPLACE(convert(varchar,DTCOLETA,102),'.','-')
+    FROM AMOSTRA WHERE CDAMOSTRA = 3003433
+    UNION
+    SELECT
+    9001,'Fecha de Publicacion',REPLACE(convert(varchar,DTPUBLICACAO,102),'.','-')
+    FROM AMOSTRA WHERE CDAMOSTRA = 3003433
+    UNION
+    SELECT
+    9002,'Fecha de Entrega Prevista',REPLACE(convert(varchar,DTPREVENTREGA,102),'.','-')
+    FROM AMOSTRA WHERE CDAMOSTRA = 3003433
+    UNION
+    SELECT
+    9003,'Cliente',CASE WHEN A.CDUNIDADE IN (41) THEN DBO.cuit(e.CNPJCPF) ELSE E.CNPJCPF END
+    FROM AMOSTRA A
+    INNER JOIN EMPRESA E ON E.CDEMPRESA = A.CDEMPRESACON
+    WHERE CDAMOSTRA = 3003433
+    UNION
+    SELECT 
+    1000,'Mercados',onlinedata.dbo.mrl_mercados(3003433)
+    UNION
+    SELECT
+	1001,'Retailers',onlinedata.dbo.mrl_retail(3003433)
+    UNION
+    SELECT
+	1002,'Idioma',(select descopcao from opcoesinfo where cdinfo = 781 and nmopcao = dbo.infos(3003433,781))
+    UNION
+    SELECT
+    855,'Precarga',dbo.infos(3003433,855)
+    UNION
+	SELECT TOP 1 
+    9999,'Tipo de Analisis',mrm.cdtipoanalisis
+    from
+    metodoanalise m 
+    inner join metodosam ma on ma.cdmetodo = m.cdmetodo
+    inner join onlinedata.dbo.mrl_metodos mrm on mrm.idauxmetodo = m.idauxmetodo
+    where ma.cdamostra = 3003433
+    UNION 
+    SELECT TOP 1 
+    1004,'Fac',E.NMUDEMPRESA04
+    FROM AMOSTRA A
+    INNER JOIN EMPRESA E ON E.CDEMPRESA = A.CDEMPRESASOL AND E.FLATIVO = 'S'
+    WHERE A.CDAMOSTRA = 3003433</pre>Array
+(
+    [orden_servicio] => 3003433
+    [especie] => Limones
+    [tipo_analisis] => 5
+    [codigo_interno] => 
+    [factura] => 440 - Huerto Planta San Felipe
+    [exportador] => 946120006
+    [fecha_entrega] => 2025-06-05
+    [fecha_recepcion] => 2025-06-02
+    [tipo_entrega] => 1
+    [predio] => FUNDO LO BLANCO
+    [variedad] => EUREKA
+    [muestreador] => JORGE LAZCANO
+    [fecha_muestreo] => 2025-06-02
+    [otros] => 
+    [contacto_retiro] => test contacto
+    [direccion_retiro] => test dire
+    [muestreado_por] => 1
+    [comentarios] => 288280/2024-1.0
+    [codigo_laboratorio] => 10
+    [codigo_muestra] => 188356
+)
+<pre>1</pre>aqui2{"orden_servicio":"3003433","especie":"Limones","tipo_analisis":"5","codigo_interno":null,"factura":"440 - Huerto Planta San Felipe","exportador":"946120006","fecha_entrega":"2025-06-05","fecha_recepcion":"2025-06-02","tipo_entrega":"1","predio":"FUNDO LO BLANCO","variedad":"EUREKA","muestreador":"JORGE LAZCANO","fecha_muestreo":"2025-06-02","otros":null,"contacto_retiro":"test contacto","direccion_retiro":"test dire","muestreado_por":"1","comentarios":"288280\/2024-1.0","codigo_laboratorio":"10","codigo_muestra":188356}Respuesta 1 https://customers.mrlmanagement.com/ws/wsCargaMuestrasByID => { "res": true, "message": "Datos guardados exitosamente", "ficha": 188356  } <br><br>DELETE FROM onlinedata.dbo.clink_mrl WHERE cdamostra = 3003433;
+                INSERT INTO onlinedata.dbo.clink_mrl( cdamostra,sent,resend,fecha,ficha,test,mercados,retailers,idioma,valores) 
+                VALUES(3003433,1,0,getdate(),188356,1,'1','0',0,0)Carga Muestra: <br><br><pre>Array
+(
+    [orden_servicio] => 3003433
+    [especie] => Limones
+    [tipo_analisis] => 5
+    [codigo_interno] => 
+    [factura] => 440 - Huerto Planta San Felipe
+    [exportador] => 946120006
+    [fecha_entrega] => 2025-06-05
+    [fecha_recepcion] => 2025-06-02
+    [tipo_entrega] => 1
+    [predio] => FUNDO LO BLANCO
+    [variedad] => EUREKA
+    [muestreador] => JORGE LAZCANO
+    [fecha_muestreo] => 2025-06-02
+    [otros] => 
+    [contacto_retiro] => test contacto
+    [direccion_retiro] => test dire
+    [muestreado_por] => 1
+    [comentarios] => 288280/2024-1.0
+    [codigo_laboratorio] => 10
+    [codigo_muestra] => 188356
+)
+</pre><br><br>Respuesta:<br> { "res": true, "message": "Datos guardados exitosamente", "ficha": 188356  } <br>traemos los resultados<pre>SELECT DISTINCT
+     COALESCE(VS.CAS,VS.NMVS),
+      VLVS = REPLACE(VSA.VLVS,'**',''),
+      VSA.INCERTEZA
+      FROM 
+      AMOSTRA A
+      INNER JOIN VSAMOSTRA VSA ON VSA.CDAMOSTRA = A.CDAMOSTRA
+      INNER JOIN VARSAIDA VS ON VS.CDVS = VSA.CDVS
+      INNER JOIN METODOANALISE M ON M.CDMETODO = VSA.CDMETODO
+      INNER JOIN ONLINEDATA.DBO.MRL_METODOS MRM on MRM.IDAUXMETODO = M.IDAUXMETODO and MRM.CDUNIDADE = A.CDUNIDADE
+      WHERE
+      A.CDAMOSTRA = 3003433
+      and VSA.CDVS NOT IN (3672)
+      AND VSA.FLIMPRIME = 'S'
+      AND VSA.VLVS NOT LIKE 'ND' 
+      AND VSA.VLVS NOT LIKE 'N.D.' 
+      AND VSA.VLVS NOT LIKE 'DNC'
+      --AND CHARINDEX('**',VSA.VLVS)=0
+      AND ((CASE WHEN CHARINDEX('**',VSA.VLVS) > 0 THEN dbo.EsNumeroValido(VSA.INCERTEZA) ELSE 0 END) = 1 OR CHARINDEX('**',VSA.VLVS) = 0)
+      AND CHARINDEX('<',VSA.VLVS)=0</pre>datos resultados[{"pesticida":"96489-71-3","cantidad":"0,014","incertidumbre":"0,004"}]Respuesta 1 https://customers.mrlmanagement.com/ws/wsCargaResultados => { "res": true, "message": "Datos guardados exitosamente" } <br><br><pre>Array
+(
+    [orden_servicio] => 3003433
+    [fecha_entrega] => 2025-06-03
+    [fecha_recepcion] => 2025-06-02
+    [hallazgos] => [{"pesticida":"96489-71-3","cantidad":"0,014","incertidumbre":"0,004"}]
+    [comentarios] => 288280/2024-1.0
+    [laboratorio] => 10
+)
+</pre><br><br>Carga resultados= { "res": true, "message": "Datos guardados exitosamente" }Retorno de cargar datos: ok<br>traemos el informe ceimic<pre>
+        SELECT 
+
+        DA.CDAMOSTRA,
+        NMDOCUMENTO = (CASE WHEN A.CDUNIDADE IN (75,101,81,90) THEN (REPLACE(DBO.NUMERO(A.CDAMOSTRA,0),'/','-') + '.pdf') ELSE DA.NMDOCUMENTO END),
+        DA.ARQUIVO 
+        
+        FROM DOCUMENTOSAMOSTRA DA 
+        INNER JOIN AMOSTRA A ON A.CDAMOSTRA = DA.CDAMOSTRA 
+        INNER JOIN ONLINEDATA.DBO.CLINK_MRL MRL ON MRL.CDAMOSTRA = A.CDAMOSTRA 
+        
+        WHERE 
+        
+        A.CDUNIDADENEG IN (SELECT CDUNIDADE FROM UNIDADE WHERE (NMUDUNIDADE02 IN ('HLAC','USA') OR NMUDUNIDADE01 = 'FOOD') AND CDUNIDADE NOT IN (70,61,78,77) AND NMUDUNIDADE01 != 'ARG')
+        AND (ISNULL(DBO.INFOS(DA.CDAMOSTRA,855),'')<>'')
+        AND DA.CDAMOSTRA = 3003433 AND DA.FLATIVO = 'S' AND DA.CDTIPOARQUIVO = 2 
+        AND MRL.FICHA IS NOT NULL
+        </pre>Retorno = ok
