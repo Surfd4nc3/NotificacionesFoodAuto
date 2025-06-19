@@ -24,70 +24,109 @@ def is_valid_email(email_str):
     return False
 
 
-def Crear_Cuerpo_Correo_HTML(CUERPO_EMAIL, CLIENTE, datos_muestras, DATOS_TRAZAS=None):
-
+def Crear_Cuerpo_Correo_HTML(CUERPO_EMAIL_PRODUCTOS, CLIENTE, datos_muestras, DATOS_TRAZAS=None):
+    # CUERPO_EMAIL_PRODUCTOS se renombró para mayor claridad, ya que contendrá la lista de productos
+    
     id_proceso = datos_muestras[0].get(
         'IDPROCESSO', 'N/A') if datos_muestras else 'N/A'
+    
+    # La variable url_ceimic_base ya no es necesaria para la tabla, pero se mantiene por si se usa en otro lado.
     url_ceimic_base = "https://clink.ceimic.com/clink/validator.php?lng=2&codigo="
 
-    # Construir la sección de trazas
-    trazas_html = "<p></p>"
-    if DATOS_TRAZAS is not None and len(DATOS_TRAZAS.strip()) > 0: # Verificar si DATOS_TRAZAS tiene contenido
-        trazas_html = f"<p>Traza de las muestras:</p>{DATOS_TRAZAS}"
-    
-    # Construir la tabla de muestras y enlaces
+    # --- Construir la sección de Trazas con viñetas ---
+    trazas_html = ""
+    if DATOS_TRAZAS is not None and len(DATOS_TRAZAS.strip()) > 0:
+        trazas_por_muestra_dict = {}
+        current_cdamostra = None
+
+        for linea in DATOS_TRAZAS.strip().split('\n'):
+            linea_limpia = linea.strip()
+            if not linea_limpia:
+                continue
+
+            if linea_limpia.startswith("Muestra"):
+                match = re.match(r"Muestra (\d+):", linea_limpia)
+                if match:
+                    current_cdamostra = match.group(1)
+                    trazas_por_muestra_dict[current_cdamostra] = []
+            elif linea_limpia.startswith("-") and current_cdamostra:
+                trazas_por_muestra_dict[current_cdamostra].append(linea_limpia[1:].strip())
+
+        if trazas_por_muestra_dict:
+            trazas_html = "<p>Trazas encontradas:</p><ul>"
+            for cdamostra, trazas_list in trazas_por_muestra_dict.items():
+                trazas_concatenadas = ", ".join(trazas_list)
+                trazas_html += f"<li><strong>Muestra {cdamostra}:</strong> {trazas_concatenadas}</li>"
+            trazas_html += "</ul>"
+        else:
+            trazas_html = "<p></p>"
+    else:
+        trazas_html = "<p></p>"
+
+    # --- Construir la lista de Números de Informe/Productos con viñetas ---
+    productos_html = ""
+    if CUERPO_EMAIL_PRODUCTOS:
+        productos_html = "<p>Le informamos que los informes de ensayo ya se encuentran en línea para su visualización y descarga, pertenecientes a:</p><ul>"
+        items = re.findall(r'- Numero de informe\s*(.*?)(?=\s*- Numero de informe|\s*$)', CUERPO_EMAIL_PRODUCTOS, re.DOTALL)
+        for item in items:
+            productos_html += f"<li>Numero de informe {item.strip()}</li>"
+        productos_html += "</ul>"
+    else:
+        productos_html = "<p>Le informamos que los informes de ensayo ya se encuentran en línea para su visualización y descarga.</p>"
+
+
+    # Eliminar duplicados de datos_muestras
+    vistas_muestras = set()
+    muestras_unicas = []
+    for muestra in datos_muestras:
+        identificador_muestra = (muestra.get('CDAMOSTRA'), muestra.get('NRCONTROLE1'), muestra.get('NRCONTROLE2'))
+        if identificador_muestra not in vistas_muestras:
+            vistas_muestras.add(identificador_muestra)
+            muestras_unicas.append(muestra)
+
+    # === INICIO DE LA MODIFICACIÓN ===
+
+    # Construir la tabla de informes (solo texto) y el texto del portal con enlace
     muestras_tabla_html = ""
-    if datos_muestras:
+    portal_info_html = "" 
+
+    if muestras_unicas:
         muestras_tabla_html = """
         <p style="text-align: center; margin-top: 20px;">
             A continuación, el detalle de sus informes de ensayo:
         </p>
-        <table style="width: 100%; border-collapse: collapse; margin: 0 auto; text-align: center;">
+        <table style="width: 80%; max-width: 400px; border-collapse: collapse; margin: 0 auto; text-align: center;">
             <thead>
                 <tr style="background-color: #f0f0f0;">
                     <th style="padding: 10px; border: 1px solid #dddddd;">Número de Informe</th>
-                    <th style="padding: 10px; border: 1px solid #dddddd;">Acceso al Informe</th>
                 </tr>
             </thead>
             <tbody>
         """
-        
-        # Usar un conjunto para almacenar tuplas de identificadores de muestra ya procesados
-        muestras_procesadas = set()
-
-        for muestra in datos_muestras:
-            cdamostra = muestra.get('CDAMOSTRA')
-            nrcontrole1 = muestra.get('NRCONTROLE1')
-            nrcontrole2 = muestra.get('NRCONTROLE2')
-
-            # Crear una tupla con los identificadores para verificar duplicados
-            identificador_muestra = (cdamostra, nrcontrole1, nrcontrole2)
-
-            # Si la muestra ya fue procesada, saltar a la siguiente
-            if identificador_muestra in muestras_procesadas:
-                continue
-            
-            # Si no ha sido procesada, añadirla al conjunto y procesar
-            muestras_procesadas.add(identificador_muestra)
-
+        for muestra in muestras_unicas:
             num_muestra = muestra.get('NUMMUESTRA', 'N/A')
-            chave_publicacao = muestra.get('CHAVEPUBLICACAO')
+            display_num_informe = f"{num_muestra}"
             
-            link_informe = "No disponible"
-            if chave_publicacao:
-                url_validator = f"{url_ceimic_base}{chave_publicacao}"
-                link_informe = f'<a href="{url_validator}" style="color: #004a99; text-decoration: none; font-weight: bold;">Ver Informe</a>'
-            
+            # Se añade directamente el número del informe como texto plano, sin enlace.
             muestras_tabla_html += f"""
                 <tr>
-                    <td style="padding: 10px; border: 1px solid #dddddd;">{num_muestra}</td>
-                    <td style="padding: 10px; border: 1px solid #dddddd;">{link_informe}</td>
+                    <td style="padding: 10px; border: 1px solid #dddddd;">{display_num_informe}</td>
                 </tr>
             """
         muestras_tabla_html += """
             </tbody>
         </table>
         """
+
+        # Texto mejorado con hipervínculo para mostrar debajo de la tabla
+        portal_info_html = """
+        <p style="text-align: center; margin-top: 25px; font-size: 14px; color: #555555;">
+            Para visualizar sus resultados y/o descargar su informe, ingrese a nuestro portal:<br>
+            <a href="http://myclink.ceimic.com/" style="color: #004a99; font-weight: bold; text-decoration: none;">http://myclink.ceimic.com/</a>
+        </p>
+        """
+    # === FIN DE LA MODIFICACIÓN ===
+
 
     # Estilos CSS en línea para asegurar la compatibilidad con la mayoría de clientes de correo
     html_cuerpo = f"""
@@ -138,20 +177,6 @@ def Crear_Cuerpo_Correo_HTML(CUERPO_EMAIL, CLIENTE, datos_muestras, DATOS_TRAZAS
             .email-content strong {{
                 color: #004a99;
             }}
-            .button-link {{
-                display: inline-block;
-                background-color: #28a745; /* Un verde vibrante para el botón */
-                color: #ffffff !important; /* !important para asegurar que el color del texto sea blanco */
-                padding: 12px 25px;
-                border-radius: 5px;
-                text-decoration: none;
-                font-weight: bold;
-                margin-top: 20px;
-                transition: background-color 0.3s ease;
-            }}
-            .button-link:hover {{
-                background-color: #218838;
-            }}
             .email-footer {{
                 margin-top: 30px;
                 padding-top: 20px;
@@ -184,9 +209,6 @@ def Crear_Cuerpo_Correo_HTML(CUERPO_EMAIL, CLIENTE, datos_muestras, DATOS_TRAZAS
                 background-color: #f2f2f2;
                 font-weight: bold;
             }}
-            tr:nth-child(even) {{
-                background-color: #f9f9f9;
-            }}
         </style>
     </head>
     <body>
@@ -195,12 +217,11 @@ def Crear_Cuerpo_Correo_HTML(CUERPO_EMAIL, CLIENTE, datos_muestras, DATOS_TRAZAS
                 <h2>Notificación de Informe de Ensayo</h2>
             </div>
             <div class="email-content">
-                <p>Estimado(a) <strong>{CLIENTE}</strong>,</p>
-                <p>Le informamos que los informes de ensayo ya se encuentran en línea para su visualización y descarga, pertenecientes a:</p>
-
-                <p>{CUERPO_EMAIL}</p>
+                <p>Estimados <strong>{CLIENTE}</strong>,</p>
+                {productos_html}
                 {trazas_html}
                 {muestras_tabla_html} 
+                {portal_info_html}
             </div>
             <div class="email-footer">
                 <p>Atentamente,</p>

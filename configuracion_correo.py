@@ -10,9 +10,9 @@ REMITENTE_NOMBRE = "Ceimic Perú - Informe de Resultados de Análisis"
 REMITENTE_EMAIL = SMTP_USER
 
 
-DESTINATARIO_TO_POR_DEFECTO = "herrick.davis@ceimic.com"
+DESTINATARIO_TO_POR_DEFECTO = "joel.zarate@ceimic.com"
 DESTINATARIO_CC_POR_DEFECTO = "herrick.davis@ceimic.com"
-DESTINATARIO_BCC_POR_DEFECTO = "herrick.davis@ceimic.com"
+DESTINATARIO_BCC_POR_DEFECTO = "eder.ortega@ceimic.com"
 
 
 ASUNTO_PLANTILLA = "Resultado de ensayo {numeromuestra}"

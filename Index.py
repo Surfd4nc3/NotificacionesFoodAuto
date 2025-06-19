@@ -41,7 +41,7 @@ def extraer_trazas(cod_muestras):
     if conexionMylims:
         muestras_formato_sql = ",".join(
             f"'{str(traza)}'" for traza in cod_muestras)
-        muestras_formato_sql = '3246923'
+        # muestras_formato_sql = '3246923'
         # Ahora formateamos la consulta CONSULTA_TRAZAS con los códigos de muestra
         trazas_query = CONSULTA_TRAZAS.format(
             cod_muestras=muestras_formato_sql)
@@ -76,75 +76,93 @@ if __name__ == "__main__":
 
         print("\n--- Resultados Pendientes Agrupados por Cliente ---")
         for cliente, datos_muestras in pendientes_por_cliente.items():
-            # almacentar el TOEMAIL de la lista de datos de muestra que no se repitan, estan ya separados por  ";" pero no quiero repetidos
             to_email = set()
             for muestra in datos_muestras:
                 if 'TOEMAIL' in muestra and muestra['TOEMAIL']:
                     to_email.update(muestra['TOEMAIL'].split(';'))
             to_email = ';'.join(to_email)
-            # print(f"To Email Correos: {to_email}")
-            # ahora el CC Email
+
             cc_email = set()
             for muestra in datos_muestras:
                 if 'CCEMAIL' in muestra and muestra['CCEMAIL']:
                     cc_email.update(muestra['CCEMAIL'].split(';'))
             cc_email = ';'.join(cc_email)
-            # el asunto va "Resultado de ensayo " seguiddo de os ccdamostra de la lsita
+
             bcc_email = DESTINATARIO_BCC_POR_DEFECTO
-            # asunto = f"Resultado de ensayo {'; '.join(str(muestra['NUMMUESTRA']) for muestra in datos_muestras)}"
             asunto = "CEIMIC | Notificación de informe de ensayo"
 
             codigos_muestras_para_trazas = [
                 str(muestra['CDAMOSTRA']) for muestra in datos_muestras]
 
-            # PARA ALMACENAR LOC NUMMUESTRA SEGUIDO DE CODIGO_PRODDUCTOR CCONCATENADDOS
-            codigos_productos = set()
+            # --- Para ALMACENAR LOS NUMMUESTRA SEGUIDO DE CODIGO_PRODDUCTOR CONCATENADOS ---
+            # Vamos a construir un string que Crear_Cuerpo_Correo_HTML pueda parsear en una lista HTML
+            cuerpo_email_productos_str = ''
             for muestra in datos_muestras:
-                if 'NUMMUESTRA' in muestra and 'CODIGO_PRODDUCTOR' in muestra:
-                    codigos_productos.add(
-                        f"- Numero de informe {muestra['NUMMUESTRA']}{f'-{muestra['CODIGO_PRODDUCTOR']}' if muestra.get('CODIGO_PRODDUCTOR') else ''}\n")
-            codigos_productos_str = ''.join(codigos_productos)
-            print(f"{codigos_productos_str}")
+                # Verificar que NUMMUESTRA no sea None
+                if 'NUMMUESTRA' in muestra and muestra.get('NUMMUESTRA') is not None:
+                    codigo_productor_display = f"-{muestra['CODIGO_PRODDUCTOR']}" if muestra.get(
+                        'CODIGO_PRODDUCTOR') else ''
+                    cuerpo_email_productos_str += f"- Numero de informe {muestra['NUMMUESTRA']}{codigo_productor_display}\n"
 
             # Llamar a extraer_trazas con la lista de códigos de muestras
             trazas_resultados = extraer_trazas(codigos_muestras_para_trazas)
-            CUERPO_EMAIL = ''
-            # validar con un if si trazas_resultados no trae ada o esta vacio y con un else ostrar las muestrass que se extraen de penddientes
-            CUERPOO_TRAZAS = ''
+
+            cuerpo_trazas_html = ''  # Nuevo nombre para el HTML de las trazas
             if trazas_resultados is not None and len(trazas_resultados) > 0:
-                # Agrupar trazas por CDAMOSTRA
                 trazas_por_muestra = defaultdict(list)
                 for traza in trazas_resultados:
                     trazas_por_muestra[traza['CDAMOSTRA']].append(traza)
 
-                CUERPOO_TRAZAS = "Trazas encontradas:\n"
+                # Construir el string de trazas en un formato que se pueda convertir a HTML con viñetas en armarCuerpo.py
+                cuerpo_trazas_html = ""
                 for cdamostra, trazas in trazas_por_muestra.items():
-                    CUERPOO_TRAZAS += f"   Muestra {cdamostra}:\n"
+                    # Encuentra el NUMMUESTRA correspondiente para este CDAMOSTRA
+                    num_muestra_asociado = 'N/A'
+                    for dm in datos_muestras:
+                        # Asegúrate de comparar CDAMOSTRA como string si uno es int y el otro string
+                        if str(dm.get('CDAMOSTRA')) == str(cdamostra):
+                            num_muestra_asociado = dm.get('NUMMUESTRA', 'N/A')
+                            # Si 'CODIGO_PRODDUCTOR' existe y no es None, lo añadimos al num_muestra_asociado
+                            if dm.get('CODIGO_PRODDUCTOR'):
+                                num_muestra_asociado = f"{num_muestra_asociado}-{dm['CODIGO_PRODDUCTOR']}"
+                            break
+
+                    # Construir la lista de trazas para esta muestra, separadas por comas
+                    trazas_para_linea = []
                     for traza in trazas:
-                        CUERPOO_TRAZAS += f"      - {traza['TRAZA']} ({traza['VALOR']})\n"
-                # print(f" se encontraron trazas para las muestras pendientes, {len(trazas_resultados)} trazas encontradas.\n{CUERPO_EMAIL}")
+                        traza_nombre = traza.get('TRAZA', 'N/A')
+                        traza_valor = traza.get('VALOR', 'N/A')
+                        trazas_para_linea.append(
+                            f"{traza_nombre} ({traza_valor})")
+
+                    # Unir todas las trazas de esta muestra con comas
+                    trazas_concatenadas = ", ".join(trazas_para_linea)
+
+                    # Formatear la línea como "(NUMMUESTRA_CON_PRODUCTOR) Numero de informe: TRACE1 (VALUE1), TRACE2 (VALUE2)"
+                    cuerpo_trazas_html += f"({num_muestra_asociado}) Numero de informe: {trazas_concatenadas}\n"
             else:
-                CUERPO_EMAIL = "Lista de Muestras Pendientes:\n"
-                for muestra in datos_muestras:
-                    CUERPO_EMAIL += f"   - {muestra['CDAMOSTRA']}\n"
-                # print(f" se observan solo muestras totales pendientes, no se encontraron trazas.{CUERPO_EMAIL}")
+                cuerpo_trazas_html = ""  # Si no hay trazas, pasa un string vacío
+
             # Crear el cuerpo del correo
             print(f"imprimir cuerpo correo\n")
             cuerpo_correo = Crear_Cuerpo_Correo_HTML(
-                codigos_productos_str, cliente, datos_muestras,CUERPOO_TRAZAS)
+                cuerpo_email_productos_str,  # Se pasa la lista de productos formateada
+                cliente,
+                datos_muestras,  # Mantener esto para la tabla de abajo, ya que ya se encarga de los únicos
+                cuerpo_trazas_html  # Se pasa el string de trazas formateado
+            )
             # enviar correo
-            to_email = DESTINATARIO_TO_POR_DEFECTO
-            cc_email = DESTINATARIO_CC_POR_DEFECTO
-            bcc_email = DESTINATARIO_BCC_POR_DEFECTO
-            # ENVIAR EMAIL
+            to_email_final = DESTINATARIO_TO_POR_DEFECTO
+            cc_email_final = DESTINATARIO_CC_POR_DEFECTO
+            bcc_email_final = DESTINATARIO_BCC_POR_DEFECTO
 
+            # ENVIAR EMAIL
             RESP_ENVIO = EnnviarCorreo(
                 asunto,
                 cuerpo_correo,
-                to_email,
-                cc_email,
-                bcc_email
-
+                to_email_final,
+                cc_email_final,
+                bcc_email_final
             )
             # POBLAR LA TABLA DE NOTIFICACIONESINFORMESPERFOODD
             if RESP_ENVIO:
@@ -152,17 +170,20 @@ if __name__ == "__main__":
                 conexion_bdclink = manejador_bdclink.conectar()
 
                 if conexion_bdclink:
+                    # Se insertan todas las muestras que estaban en pendientes_finales y se procesaron.
+                    # Asumo que la lógica de "procesado" es registrar el intento de envío.
                     for muestra in datos_muestras:
                         insert_params = (
                             muestra['CDAMOSTRA'],
                             muestra['NRCONTROLE1'],
                             muestra['NRCONTROLE2'],
                             muestra['NRCONTROLE3'],
+                            # Estado: Enviado (o el que corresponda a "procesado")
                             1,
-                            None,
-                            to_email,
-                            cc_email,
-                            bcc_email,
+                            None,  # DTENVIO, puedes poner datetime.now() aquí si quieres
+                            to_email_final,  # Usar los emails finales utilizados para el envío
+                            cc_email_final,
+                            bcc_email_final,
                             cuerpo_correo,
                             asunto
                         )
@@ -176,7 +197,6 @@ if __name__ == "__main__":
                     print(
                         f"Error al conectar a la base de datos 'BDClink_conn' para insertar procesados para el cliente {cliente}.")
             else:
-                # Este else ya lo tenías, ahora es para cuando el envío falla
                 print(
                     f"El envío del correo falló para el cliente {cliente}. No se registrarán las muestras como procesadas.")
 
